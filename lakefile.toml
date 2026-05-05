@@ -1,0 +1,16 @@
+name = "right-byte"
+version = "0.1.0"
+defaultTargets = ["right-byte"]
+
+[[require]]
+name = "mathlib"
+scope = "leanprover-community"
+git = "https://github.com/leanprover-community/mathlib4"
+rev = "v4.29.0"
+
+[[lean_lib]]
+name = "RightByte"
+
+[[lean_exe]]
+name = "right-byte"
+root = "Main"
