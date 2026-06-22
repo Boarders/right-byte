@@ -42,36 +42,4 @@ inductive ExprTy where
   | .u8    => UInt8
   | .vec128 => Vec128
 
-/-- Expression language, indexed by an `ExprTy` for the type of the term
--/
-inductive Expr : ExprTy → Type where
-  | litBV  : BitVec n → Expr (.bv n)
-  | litU8  : UInt8 → Expr .u8
-  | var    : Var (τ.Ty) → Expr τ
-  | binOp  : BinOp → Expr (.bv n) → Expr (.bv n) → Expr (.bv n)
-  | shiftL : Expr (.bv n) → Nat → Expr (.bv n)
-  | shiftR : Expr (.bv n) → Nat → Expr (.bv n)
-  /-- Extract bits [lo, hi), producing a BitVec of width hi - lo. -/
-  | slice  : (lo hi : Nat) → Expr (.bv n) → Expr (.bv (hi - lo))
-  /-- Concatenate: e1 in the high bits, e2 in the low bits. -/
-  | concat : Expr (.bv m) → Expr (.bv n) → Expr (.bv (m + n))
-  /-- Zero-extend a BitVec m to width n. -/
-  | zext   : (n : Nat) → Expr (.bv m) → Expr (.bv n)
-  /-- A vector operation which takes in k Vec128 inputs
-      Note: We take this in the container form Fin k -> Expr .vec128 -/
-  | vecOp  : VecOp k → (Fin k → Expr .vec128) → Expr .vec128
-
-/-- Evaluate an expression under an environment. -/
-def Expr.eval : Expr τ → Env → τ.Ty
-  | .litBV b,        _   => b
-  | .litU8 n,        _   => n
-  | .var v,          env => env v
-  | .binOp op e1 e2, env => op.sem (e1.eval env) (e2.eval env)
-  | .shiftL e n,     env => e.eval env <<< n
-  | .shiftR e n,     env => e.eval env >>> n
-  | .slice lo _ e,   env => BitVec.ofNat _ ((e.eval env).toNat >>> lo)
-  | .concat e1 e2,   env => e1.eval env ++ e2.eval env
-  | .zext n e,       env => BitVec.ofNat n (e.eval env).toNat
-  | .vecOp op args,  env => op.scalarSem (Vector.ofFn (fun i => (args i).eval env))
-
 end RightByte
